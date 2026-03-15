@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road Trip: Oaxaca → Guatemala City</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #0f172a; }
+
+    /* ── Sidebar ── */
+    #sidebar { width: 400px; min-width: 400px; background: #0f172a; color: #e2e8f0; overflow-y: auto; display: flex; flex-direction: column; border-right: 1px solid #1e293b; }
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-track { background: #0f172a; }
+    #sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+    #header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 16px 20px 12px; border-bottom: 1px solid #1e293b; }
+    #header h1 { font-size: 1rem; font-weight: 700; color: #f8fafc; }
+    #header .subtitle { font-size: 0.68rem; color: #64748b; margin-top: 2px; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid #1e293b; }
+    .stat-cell { padding: 9px 6px; text-align: center; border-right: 1px solid #1e293b; }
+    .stat-cell:last-child { border-right: none; }
+    .stat-num { font-size: 0.95rem; font-weight: 700; }
+    .stat-lbl { font-size: 0.55rem; color: #475569; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 1px; }
+
+    /* ── Mode tabs ── */
+    .mode-bar { display: flex; border-bottom: 1px solid #1e293b; }
+    .mode-btn {
+      flex: 1; padding: 10px 4px 8px; background: none; border: none; border-bottom: 2px solid transparent;
+      cursor: pointer; font-size: 0.72rem; color: #64748b;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      transition: all 0.15s;
+    }
+    .mode-btn:hover:not(.active) { background: rgba(255,255,255,0.03); color: #94a3b8; }
+    .mode-btn .mode-icon { font-size: 1.05rem; }
+    .mode-btn.active[data-mode="car"]    { color: #f97316; border-bottom-color: #f97316; background: rgba(249,115,22,0.06); }
+    .mode-btn.active[data-mode="bus"]    { color: #14b8a6; border-bottom-color: #14b8a6; background: rgba(20,184,166,0.06); }
+    .mode-btn.active[data-mode="hybrid"] { color: #a855f7; border-bottom-color: #a855f7; background: rgba(168,85,247,0.06); }
+
+    /* Mode description */
+    #mode-desc {
+      padding: 7px 14px; font-size: 0.67rem; color: #94a3b8;
+      background: #0a0f1e; border-bottom: 1px solid #1e293b;
+      line-height: 1.4;
+    }
+
+    .section-label { padding: 7px 16px 4px; font-size: 0.56rem; color: #475569; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #1e293b; background: #0a0f1e; }
+
+    /* ── Stop rows ── */
+    .stop-row { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #1e293b; transition: background 0.15s; display: flex; align-items: flex-start; gap: 10px; }
+    .stop-row:hover { background: #1a2438; }
+    .stop-row.active { background: #1e2f47; border-left: 3px solid #f97316; padding-left: 11px; }
+    .stop-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; color: white; flex-shrink: 0; margin-top: 1px; }
+    .stop-content { flex: 1; min-width: 0; }
+    .stop-title { font-size: 0.82rem; font-weight: 600; color: #f1f5f9; }
+    .stop-meta { display: flex; gap: 5px; margin-top: 2px; align-items: center; flex-wrap: wrap; }
+    .stop-country { font-size: 0.6rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
+    .stop-duration { font-size: 0.6rem; color: #94a3b8; background: #1e293b; padding: 1px 6px; border-radius: 10px; }
+    .stop-hl-preview { font-size: 0.64rem; color: #64748b; margin-top: 3px; line-height: 1.4; }
+
+    /* ── Segment rows ── */
+    .seg-row { padding: 5px 14px 5px 28px; display: flex; align-items: center; gap: 8px; background: #090d1a; border-bottom: 1px solid #1e293b; }
+    .seg-connector { width: 2px; height: 28px; flex-shrink: 0; border-radius: 1px; }
+    .seg-content { font-size: 0.64rem; color: #64748b; line-height: 1.55; flex: 1; }
+    .seg-km    { color: #94a3b8; font-weight: 600; }
+    .seg-cost  { color: #6ee7b7; font-weight: 600; }
+    .seg-time  { color: #94a3b8; font-weight: 600; }
+    .seg-co    { color: #7dd3fc; }
+    .seg-muted { color: #374151; }
+    .seg-rec   { color: #64748b; font-style: italic; }
+
+    .badge { display: inline-block; font-size: 0.56rem; padding: 1px 5px; border-radius: 3px; margin-left: 3px; }
+    .badge-ok     { background: rgba(34,197,94,0.1);  color: #86efac; border: 1px solid rgba(34,197,94,0.2); }
+    .badge-border { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-car    { background: rgba(249,115,22,0.12); color: #fdba74; border: 1px solid rgba(249,115,22,0.25); }
+    .badge-bus    { background: rgba(20,184,166,0.12); color: #5eead4; border: 1px solid rgba(20,184,166,0.25); }
+    .badge-shuttle { background: rgba(168,85,247,0.12); color: #d8b4fe; border: 1px solid rgba(168,85,247,0.25); }
+
+    /* ── Flight row ── */
+    .flight-row { padding: 6px 14px 6px 28px; display: flex; align-items: center; gap: 8px; background: #090d1a; border-bottom: 1px solid #1e293b; }
+    .flight-line { width: 2px; height: 28px; flex-shrink: 0; background: repeating-linear-gradient(to bottom, #8b5cf6 0, #8b5cf6 4px, transparent 4px, transparent 8px); }
+    .flight-info { font-size: 0.66rem; color: #a78bfa; line-height: 1.5; }
+
+    /* ── Timeline ── */
+    .timeline-section { padding: 12px 16px; border-bottom: 1px solid #1e293b; }
+    .tl-item { display: flex; gap: 10px; margin-bottom: 5px; font-size: 0.66rem; color: #94a3b8; line-height: 1.4; }
+    .tl-day { color: #475569; font-weight: 600; min-width: 50px; flex-shrink: 0; }
+    .tl-loc strong { color: #cbd5e1; }
+
+    /* ── Legend & tips ── */
+    .legend-section { padding: 10px 16px; border-bottom: 1px solid #1e293b; }
+    .legend-title { font-size: 0.56rem; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .legend-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.64rem; color: #94a3b8; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .tips-section { padding: 10px 16px; }
+    .tip-item { font-size: 0.64rem; color: #94a3b8; line-height: 1.5; padding: 3px 0; border-bottom: 1px solid #1e293b; }
+    .tip-item:last-child { border-bottom: none; }
+
+    /* ── Map ── */
+    #map-wrap { flex: 1; position: relative; overflow: hidden; }
+    #map { width: 100%; height: 100%; }
+
+    /* Loading */
+    #loading-overlay { position: absolute; inset: 0; z-index: 2000; background: rgba(9,13,26,0.8); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; backdrop-filter: blur(2px); transition: opacity 0.4s; }
+    #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+    .spinner { width: 30px; height: 30px; border: 3px solid #1e293b; border-top-color: #f97316; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.75rem; color: #94a3b8; }
+
+    /* Highlight info box */
+    #hl-box { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 1000; display: none; background: rgba(9,18,38,0.96); border: 1px solid #38bdf8; border-radius: 8px; padding: 8px 13px; font-size: 0.73rem; color: #e2e8f0; backdrop-filter: blur(8px); box-shadow: 0 4px 20px rgba(0,0,0,0.55); align-items: center; gap: 8px; white-space: nowrap; }
+    #hl-box.show { display: flex; }
+    #hl-box .hl-name { font-weight: 600; color: #f1f5f9; }
+    #hl-box .hl-time { color: #38bdf8; font-size: 0.67rem; margin-left: 3px; }
+    #hl-box .hl-clear { background: none; border: 1px solid #334155; color: #64748b; cursor: pointer; border-radius: 4px; padding: 2px 7px; font-size: 0.65rem; transition: all 0.15s; }
+    #hl-box .hl-clear:hover { border-color: #94a3b8; color: #94a3b8; }
+
+    /* Segment hover tooltip */
+    .seg-tooltip { background: #0f172a !important; border: 1px solid #334155 !important; border-radius: 6px !important; color: #e2e8f0 !important; padding: 8px 11px !important; font-family: 'Segoe UI', system-ui, sans-serif !important; font-size: 0.7rem !important; line-height: 1.6 !important; box-shadow: 0 4px 16px rgba(0,0,0,0.5) !important; max-width: 260px !important; pointer-events: none !important; }
+    .seg-tooltip::before { display: none !important; }
+    .tt-route { font-weight: 700; font-size: 0.75rem; margin-bottom: 2px; }
+    .tt-time { font-weight: 600; color: #fbbf24; }
+    .tt-sub { color: #64748b; font-size: 0.64rem; }
+    .tt-notes { color: #94a3b8; font-size: 0.63rem; margin-top: 3px; line-height: 1.4; font-style: italic; }
+
+    /* Popup */
+    .dark-popup .leaflet-popup-content-wrapper { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.55); padding: 0; overflow: hidden; }
+    .dark-popup .leaflet-popup-content { margin: 0; min-width: 260px; max-width: 300px; }
+    .dark-popup .leaflet-popup-tip { background: #1e293b; }
+    .dark-popup .leaflet-popup-close-button { color: #64748b !important; padding: 6px 8px !important; }
+    .popup-head { padding: 10px 14px; border-bottom: 1px solid #334155; }
+    .popup-name { font-size: 0.9rem; font-weight: 700; color: #f8fafc; }
+    .popup-country { font-size: 0.62rem; color: #64748b; margin-top: 1px; }
+    .popup-days { display: inline-block; background: rgba(249,115,22,0.15); color: #fb923c; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; margin-top: 4px; border: 1px solid rgba(249,115,22,0.3); }
+    .popup-body { padding: 9px 14px; }
+    .popup-desc { font-size: 0.68rem; color: #94a3b8; line-height: 1.5; margin-bottom: 7px; }
+    .popup-hl-title { font-size: 0.56rem; color: #f97316; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+    .popup-tip { margin-top: 7px; padding: 5px 8px; background: #0f172a; border-radius: 4px; font-size: 0.63rem; color: #94a3b8; font-style: italic; line-height: 1.4; }
+    .hl-item { cursor: pointer; padding: 4px 5px; border-radius: 4px; border-bottom: 1px solid #1e2d3e; line-height: 1.4; transition: background 0.12s; display: flex; align-items: flex-start; gap: 5px; }
+    .hl-item:last-child { border-bottom: none; }
+    .hl-item:hover { background: rgba(56,189,248,0.08); }
+    .hl-item.hl-active { background: rgba(56,189,248,0.13); border-left: 2px solid #38bdf8; padding-left: 3px; }
+    .hl-item-body { flex: 1; }
+    .hl-item-name { font-size: 0.68rem; color: #cbd5e1; }
+    .hl-item-time { font-size: 0.60rem; color: #475569; margin-top: 1px; }
+    .hl-hint { font-size: 0.57rem; color: #334155; font-style: italic; margin-top: 1px; display: none; }
+    .hl-item:hover .hl-hint { display: block; }
+  </style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div id="header">
+    <h1>🗺 Oaxaca → Guatemala City</h1>
+    <div class="subtitle">Road Trip · Via Chiapas · ~3 Weeks · Return ✈️ Mexico City</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-cell"><div class="stat-num" id="stat-km" style="color:#f97316">~1,200</div><div class="stat-lbl">km driving</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:#94a3b8">21–23</div><div class="stat-lbl">Days total</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:#94a3b8">9</div><div class="stat-lbl">Stops</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:#94a3b8">6h</div><div class="stat-lbl">Max / day</div></div>
+  </div>
+
+  <!-- Mode selector -->
+  <div class="mode-bar">
+    <button class="mode-btn active" data-mode="car" onclick="switchMode('car')">
+      <span class="mode-icon">🚗</span><span>Car</span>
+    </button>
+    <button class="mode-btn" data-mode="bus" onclick="switchMode('bus')">
+      <span class="mode-icon">🚌</span><span>Bus</span>
+    </button>
+    <button class="mode-btn" data-mode="hybrid" onclick="switchMode('hybrid')">
+      <span class="mode-icon">🔀</span><span>Hybrid</span>
+    </button>
+  </div>
+  <div id="mode-desc">🚗 Rent a car for the full journey — maximum flexibility for day trips and hidden gems along the way.</div>
+
+  <div class="section-label">Itinerary &amp; Stops</div>
+  <div id="itinerary"></div>
+
+  <div class="section-label">Sample 22-Day Timeline</div>
+  <div class="timeline-section">
+    <div class="tl-item"><span class="tl-day">Days 1–8</span><span class="tl-loc"><strong>Oaxaca</strong> — Monte Albán, Hierve el Agua, mezcal</span></div>
+    <div class="tl-item"><span class="tl-day">Day 9</span><span class="tl-loc">Drive/Bus → <strong>Tehuantepec</strong> (overnight)</span></div>
+    <div class="tl-item"><span class="tl-day">Day 10</span><span class="tl-loc">Drive/Bus → Tuxtla (Cañón del Sumidero) → <strong>San Cristóbal</strong></span></div>
+    <div class="tl-item"><span class="tl-day">Days 11–17</span><span class="tl-loc"><strong>San Cristóbal</strong> — Chamula, Zinacantán, Palenque</span></div>
+    <div class="tl-item"><span class="tl-day">Day 18</span><span class="tl-loc">Drive/Shuttle → Border → <strong>Huehuetenango</strong></span></div>
+    <div class="tl-item"><span class="tl-day">Day 19</span><span class="tl-loc">Drive/Bus → <strong>Quetzaltenango</strong> (Fuentes Georginas)</span></div>
+    <div class="tl-item"><span class="tl-day">Day 20</span><span class="tl-loc">Drive/Shuttle → <strong>Antigua</strong> Guatemala</span></div>
+    <div class="tl-item"><span class="tl-day">Day 21</span><span class="tl-loc"><strong>Antigua</strong> — Acatenango / Lake Atitlán</span></div>
+    <div class="tl-item"><span class="tl-day">Day 22</span><span class="tl-loc">Shuttle → <strong>Guatemala City</strong> → ✈️ Mexico City</span></div>
+  </div>
+
+  <div class="section-label">Legend</div>
+  <div class="legend-section">
+    <div class="legend-grid">
+      <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Start</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Main stop</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Transit stop</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div>Border</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div>Car route</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#14b8a6"></div>Bus/shuttle route</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#38bdf8"></div>Highlight route</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>Flight</div>
+    </div>
+  </div>
+
+  <div class="section-label">Notes</div>
+  <div class="tips-section">
+    <div class="tip-item">📍 Click any stop → click a <strong>highlight</strong> to show its actual road route</div>
+    <div class="tip-item">🛂 Cross <strong>La Mesilla</strong> before 10am. Buy GT vehicle insurance online if driving.</div>
+    <div class="tip-item">🌡️ San Cristóbal at 2,200m — pack a light jacket year-round.</div>
+    <div class="tip-item">⛽ Fill up before entering Guatemala — fuel is cheaper in Mexico.</div>
+    <div class="tip-item">🚌 Bus bookings: <strong>ado.com.mx</strong> (Mexico) · <strong>pullman.com.gt</strong> (Guatemala)</div>
+  </div>
+</div>
+
+<div id="map-wrap">
+  <div id="map"></div>
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">Loading road routes…</div>
+  </div>
+  <div id="hl-box">
+    <span>📍</span>
+    <span id="hl-box-content"></span>
+    <button class="hl-clear" onclick="clearHL()">✕ Clear</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════ STOPS DATA ═══════════════════════ */
+const stops = [
+  {
+    num:1, name:"Oaxaca City", country:"Mexico 🇲🇽", lat:17.0669, lng:-96.7203,
+    color:"#22c55e", days:"7–10 days",
+    desc:"One of Mexico's most vibrant cultural capitals — world-class food, mezcal, and pre-Hispanic ruins.",
+    highlights:[
+      {name:"Monte Albán (Zapotec ruins)",                   time:"9 km · ~20 min",                    lat:17.0432,lng:-96.7676},
+      {name:"Hierve el Agua (petrified waterfalls)",          time:"70 km · ~1.5 h (last 10 km unpaved)", lat:16.8652,lng:-96.2751},
+      {name:"Mitla ruins",                                   time:"45 km · ~50 min",                    lat:16.9267,lng:-96.3644},
+      {name:"Yagul ruins (combine with Mitla)",              time:"36 km · ~45 min",                    lat:16.9537,lng:-96.4764},
+      {name:"Mezcal distilleries, Santiago Matatlán",        time:"50 km · ~1 h",                       lat:16.8567,lng:-96.5124},
+      {name:"Mercados Benito Juárez & 20 de Noviembre",      time:"In centro — walkable",                lat:17.0619,lng:-96.7258},
+      {name:"Tlacolula Sunday market (combine with Mitla)",  time:"45 km · ~50 min",                    lat:16.9556,lng:-96.4729}
+    ],
+    tip:"Stay in the historic centro. Book a cooking class — Oaxacan cuisine is UNESCO-listed."
+  },
+  {
+    num:2, name:"Tehuantepec", country:"Mexico 🇲🇽", lat:16.3228, lng:-95.2393,
+    color:"#f59e0b", days:"1 night (transit)",
+    desc:"Overnight in the Isthmus of Tehuantepec — breaks the drive, unique Zapotec-Istmeño culture.",
+    highlights:[
+      {name:"Zócalo evening stroll",                time:"In town — walkable", lat:16.3228,lng:-95.2393},
+      {name:"Istmeño cuisine (iguana tacos, tasajo)",time:"In town — walkable", lat:16.3189,lng:-95.2412},
+      {name:"Mercado Municipal",                    time:"In town — walkable", lat:16.3215,lng:-95.2380}
+    ],
+    tip:"Low-key but charming. Great early night before the Chiapas drive."
+  },
+  {
+    num:3, name:"Tuxtla Gutiérrez", country:"Mexico 🇲🇽", lat:16.7521, lng:-93.1152,
+    color:"#f59e0b", days:"Half-day en route",
+    desc:"Chiapas capital — ideal for a 2-3h activity stop before the short climb to San Cristóbal.",
+    highlights:[
+      {name:"Cañón del Sumidero boat tour (~2 h on water)",time:"12 km · ~20 min to Cahuaré dock", lat:16.8488,lng:-93.0854},
+      {name:"Zoológico ZOOMAT",                           time:"5 km · ~15 min",                  lat:16.7332,lng:-93.1062},
+      {name:"Parque Bicentenario",                        time:"In centro — walkable",              lat:16.7519,lng:-93.1067}
+    ],
+    tip:"The Cañón del Sumidero canyon is 1,000m deep — boat tours are unmissable."
+  },
+  {
+    num:4, name:"San Cristóbal de las Casas", country:"Mexico 🇲🇽", lat:16.7370, lng:-92.6376,
+    color:"#3b82f6", days:"7–10 days",
+    desc:"Your main Chiapas base — colonial highland city at 2,200m with rich indigenous culture.",
+    highlights:[
+      {name:"San Juan Chamula (Tzotzil church, no photos!)",time:"10 km · ~20 min",                    lat:16.7868,lng:-92.6860},
+      {name:"Zinacantán village & weaving cooperatives",    time:"11 km · ~25 min",                    lat:16.7577,lng:-92.7122},
+      {name:"Lagos de Montebello national park",            time:"95 km · ~1.5–2 h",                   lat:16.1182,lng:-91.6767},
+      {name:"Agua Azul & Misol-Há waterfalls",              time:"140 km · ~2.5 h",                    lat:17.2560,lng:-92.1177},
+      {name:"Palenque Maya ruins",                          time:"200 km · ~3.5 h — best overnight",   lat:17.4838,lng:-92.0458},
+      {name:"Na Bolom cultural museum",                     time:"In SCC centro — walkable",            lat:16.7374,lng:-92.6270},
+      {name:"Amber & textile markets",                      time:"In SCC centro — walkable",            lat:16.7353,lng:-92.6328}
+    ],
+    tip:"Excellent café scene. Hire a local guide for the indigenous villages — transformative."
+  },
+  {
+    num:5, name:"La Mesilla / Cd. Cuauhtémoc", country:"MX–GT Border 🛂", lat:15.5167, lng:-91.9833,
+    color:"#ef4444", days:"Border crossing",
+    desc:"Main land border on the Pan-American Highway between Mexico and Guatemala.",
+    highlights:[
+      {name:"Immigration & customs (passport + vehicle)",  time:"At the crossing — allow 1–3 h",      lat:15.5167,lng:-91.9833},
+      {name:"Buy Guatemala vehicle insurance",             time:"Offices at the crossing",             lat:15.5167,lng:-91.9833},
+      {name:"Change pesos → quetzales",                   time:"At crossing or in Huehuetenango",     lat:15.5167,lng:-91.9833}
+    ],
+    tip:"Cross before 10am. Vehicles need a temporary import permit and mandatory GT insurance."
+  },
+  {
+    num:6, name:"Huehuetenango", country:"Guatemala 🇬🇹", lat:15.3194, lng:-91.4722,
+    color:"#f59e0b", days:"1 night (transit)",
+    desc:"First major Guatemalan highland town after the border — colonial plaza, great for recovering.",
+    highlights:[
+      {name:"Parque Central",                         time:"In town — walkable",  lat:15.3208,lng:-91.4715},
+      {name:"Zaculeu Mayan ruins (Mam culture)",      time:"5 km · ~10 min",      lat:15.3395,lng:-91.4988},
+      {name:"Mercado La Terminal",                    time:"In town — walkable",  lat:15.3194,lng:-91.4722},
+      {name:"Pepián & jocon — highland cuisine",      time:"In town — walkable",  lat:15.3200,lng:-91.4710}
+    ],
+    tip:"Zaculeu ruins are 5km away and often overlooked. Worth a quick visit."
+  },
+  {
+    num:7, name:"Quetzaltenango (Xela)", country:"Guatemala 🇬🇹", lat:14.8354, lng:-91.5180,
+    color:"#f59e0b", days:"1–2 days (recommended)",
+    desc:"Guatemala's authentic second city — highland university town with incredible nearby activities.",
+    highlights:[
+      {name:"Fuentes Georginas hot springs",          time:"12 km · ~25 min (steep narrow road)", lat:14.7677,lng:-91.5530},
+      {name:"Parque Centroamérica",                   time:"In Xela centro — walkable",            lat:14.8354,lng:-91.5178},
+      {name:"Santa María volcano trailhead",          time:"5 km · ~15 min (then 5–6 h hike)",    lat:14.7566,lng:-91.5520},
+      {name:"San Andrés Xecul technicolor church",    time:"15 km · ~25–30 min",                  lat:14.9053,lng:-91.4928},
+      {name:"Spanish language schools",               time:"In Xela centro — walkable",            lat:14.8354,lng:-91.5180}
+    ],
+    tip:"Fuentes Georginas after days of driving — perfect reward. San Andrés Xecul is unmissable."
+  },
+  {
+    num:8, name:"Antigua Guatemala", country:"Guatemala 🇬🇹", lat:14.5586, lng:-90.7295,
+    color:"#3b82f6", days:"3–5 days",
+    desc:"UNESCO World Heritage colonial city — arguably Central America's most beautiful destination.",
+    highlights:[
+      {name:"Acatenango overnight hike (Fuego erupts below!)",time:"18 km · ~40 min to trailhead, then 4–5 h climb", lat:14.5008,lng:-90.8774},
+      {name:"La Merced church & Cathedral ruins",             time:"In Antigua centro — walkable",                    lat:14.5593,lng:-90.7335},
+      {name:"Arco de Santa Catalina",                        time:"In Antigua centro — walkable",                    lat:14.5582,lng:-90.7345},
+      {name:"Coffee farm tour (Finca Filadelfia)",            time:"3 km · ~10 min",                                 lat:14.5794,lng:-90.7427},
+      {name:"Jade Museum",                                   time:"In Antigua centro — walkable",                    lat:14.5587,lng:-90.7337},
+      {name:"Lake Atitlán day trip (Panajachel)",            time:"90 km · ~1.5–2 h — unmissable!",                 lat:14.7409,lng:-91.1601},
+      {name:"San Antonio Aguas Calientes weaving village",   time:"4 km · ~10 min",                                 lat:14.5330,lng:-90.7662}
+    ],
+    tip:"Lake Atitlán is non-negotiable. Book Acatenango overnight hike with a reputable agency."
+  },
+  {
+    num:9, name:"Guatemala City", country:"Guatemala 🇬🇹", lat:14.6349, lng:-90.5069,
+    color:"#8b5cf6", days:"1 day + fly ✈️",
+    desc:"Guatemala's capital and your flight departure point to Mexico City.",
+    highlights:[
+      {name:"Museo Popol Vuh (Mayan artifacts, world-class)", time:"Zona 10 · 15–30 min from airport",  lat:14.6012,lng:-90.5093},
+      {name:"Museo Nacional de Arqueología",                  time:"Zona 13 · ~10 min from airport",    lat:14.5896,lng:-90.5244},
+      {name:"Zona Viva (restaurants & nightlife)",            time:"Zona 10 · ~15 min from airport",    lat:14.6035,lng:-90.5083},
+      {name:"Kaminaljuyú Maya ruins",                        time:"Zona 7 · ~25 min from Zona Viva",   lat:14.6283,lng:-90.5490},
+      {name:"La Aurora International Airport (GUA)",         time:"Zona 13 · ~15 min from Zona Viva",  lat:14.5833,lng:-90.5271}
+    ],
+    tip:"Shuttle from Antigua takes ~45 min (~$15 USD). Arrive at GUA 2.5 h before departure."
+  }
+];
+
+/* ═══════════════════════ SEGMENT DATA ═════════════════════ */
+const carSegs = [
+  {km:260, t:"3.5–4.5 h", from:"Oaxaca City",    to:"Tehuantepec",          road:"Hwy 190", notes:"Winding Sierra Madre mountain roads — many curves and topes (speed bumps). Scenic but slow, don't underestimate.", border:false},
+  {km:300, t:"4–5 h",     from:"Tehuantepec",    to:"Tuxtla Gutiérrez",     road:"Hwy 190 (Chiapas lowlands)", notes:"Flatter isthmus then rolling terrain. Toll booths and town sections add up — allow the full 5 h.", border:false},
+  {km:85,  t:"1.5–2 h",   from:"Tuxtla Gtez.",   to:"San Cristóbal",        road:"Hwy 190", notes:"Sharp climb from 550m to 2,200m. Very winding despite the short distance.", border:false},
+  {km:170, t:"2–2.5 h + border", from:"San Cristóbal", to:"La Mesilla Border", road:"Hwy 190 Pan-Am via Comitán", notes:"Comitán (85 km, ~1 h) is a good lunch stop. Add 1–3 h for border crossing — cross before 10 am.", border:true},
+  {km:90,  t:"1.5–2 h",   from:"La Mesilla",     to:"Huehuetenango",        road:"CA-1 Panamericana (Guatemala)", notes:"Mountain road. Guatemala road surfaces are variable — allow extra buffer.", border:false},
+  {km:95,  t:"2–2.5 h",   from:"Huehuetenango",  to:"Quetzaltenango (Xela)",road:"CA-1 via Cuatro Caminos", notes:"Winding Cuchumatanes highland road. Narrow and truck-heavy near Cuatro Caminos junction.", border:false},
+  {km:130, t:"2.5–3 h",   from:"Quetzaltenango", to:"Antigua Guatemala",    road:"RN-1 → CA-1 via Los Encuentros", notes:"Mix of Pan-American and secondary highland roads. Los Encuentros junction can have slow market traffic.", border:false},
+  {km:45,  t:"45 min–1.5 h", from:"Antigua",     to:"Guatemala City",       road:"CA-9 Panamericana", notes:"Short stretch but Guatemala City traffic is unpredictable. Avoid weekday rush hours (7–9 am, 5–7 pm).", border:false}
+];
+
+const busSegs = [
+  {t:"4–5 h",   company:"ADO / OCC (first class)",         cost:"~150–200 MXN (~$8–12 USD)",  freq:"Several daily departures",       terminal:"Oaxaca ADO Terminal (Héroes de Chapultepec)",         notes:"Book ADO for comfort. Sur (2nd class) is cheaper but slower with more stops.", border:false},
+  {t:"4.5–5.5 h",company:"ADO / OCC",                      cost:"~200–280 MXN (~$11–16 USD)", freq:"Several daily",                  terminal:"Tehuantepec ADO stop (book day before or online)",    notes:"ADO runs direct service. Book ahead at ado.com.mx — buses can fill on weekends.", border:false},
+  {t:"1.5–2 h", company:"ADO / OCC / Colectivos",          cost:"~80–120 MXN ADO / ~50 MXN colectivo", freq:"Colectivos every 15–20 min", terminal:"Tuxtla ADO terminal or adjacent Sur terminal",  notes:"Colectivos (shared vans) depart when full — frequent, cheap, and used by locals.", border:false},
+  {t:"3–4 h + border",company:"OCC / Sur + colectivos via Comitán", cost:"~150–180 MXN total", freq:"Frequent (change at Comitán)",  terminal:"SCC: OCC terminal next to ADO",                      notes:"Bus/colectivo to Comitán (~1.5h), then change for Ciudad Cuauhtémoc (~1h). Border adds 1–3h.", border:true},
+  {t:"1.5–2 h", company:"Local minibuses (Guatemala side)", cost:"~10–30 GTQ (~$1–4 USD)",    freq:"Frequent from border market",    terminal:"La Mesilla Guatemala side — market area",             notes:"Frequent local minibuses once through customs. Straightforward short ride.", border:false},
+  {t:"2–3 h",   company:"Pullman de Morales / Los Halcones",cost:"~30–60 GTQ (~$4–8 USD)",    freq:"Frequent morning departures",    terminal:"Huehuetenango bus terminal (near market)",           notes:"Pullman de Morales is the main operator. First-class is much more comfortable on winding roads.", border:false},
+  {t:"3–4 h",   company:"Pullman de Morales / Tourist shuttle",cost:"~80 GTQ bus / ~120–150 GTQ shuttle", freq:"Several morning departures", terminal:"Xela Minerva bus terminal",             notes:"Often requires transfer at Los Encuentros. Tourist shuttle goes direct but costs more. Avoid night travel.", border:false},
+  {t:"1–1.5 h", company:"Tourist shuttles / Chicken buses", cost:"~40–60 GTQ shuttle / ~15 GTQ chicken bus", freq:"Very frequent throughout day", terminal:"Antigua shuttle pickup from hotels",   notes:"Tourist shuttles are easiest — frequent, cheap, drop at major hotels/airport zone.", border:false}
+];
+
+// Hybrid: car for Mexico (day trip flexibility), shuttle for border + Guatemala (avoids GT car rental complexity)
+const hybridSegs = [
+  {mode:"car",     rec:"🚗 Rent car in Oaxaca — essential for Hierve el Agua & Mitla (impossible efficiently by bus)"},
+  {mode:"car",     rec:"🚗 Continue driving through Chiapas lowlands — good road quality"},
+  {mode:"car",     rec:"🚗 Short drive to your Chiapas base, keep car for day trips"},
+  {mode:"shuttle", rec:"🚌 Return car in San Cristóbal. Take tourist shuttle — covers the border crossing and drops in Huehuetenango (~$35–50 USD, ~5 h)"},
+  {mode:"shuttle", rec:"🚌 Included in the San Cristóbal → Huehuetenango international tourist shuttle"},
+  {mode:"bus",     rec:"🚌 Pullman de Morales from Huehue terminal — frequent and reliable on this stretch"},
+  {mode:"shuttle", rec:"🚌 Tourist shuttle recommended — transfer at Los Encuentros junction is complex solo"},
+  {mode:"shuttle", rec:"🚌 Shuttle drops at hotel or airport area in Guatemala City (~$15 USD, ~1 h)"}
+];
+
+const modeDescs = {
+  car:    "🚗 Rent a car for the full journey — maximum flexibility for day trips and hidden gems along the way.",
+  bus:    "🚌 Full journey by bus and shuttle — cheaper, more social, but less flexibility for reaching remote day-trip sites.",
+  hybrid: "🔀 Best of both: rent car for Mexico (Oaxaca + Chiapas day trips), return it in San Cristóbal, then take tourist shuttles through the border and across Guatemala."
+};
+
+/* ═══════════════════════ MAP INIT ════════════════════════ */
+const map = L.map('map', {center:[16.0,-92.8], zoom:6});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+/* Flight arc */
+L.polyline([[14.6349,-90.5069],[15.8,-91.5],[17.2,-93.8],[18.5,-96.2],[19.4326,-99.1332]],
+  {color:'#8b5cf6', weight:2, opacity:0.5, dashArray:'8 8'}).addTo(map);
+
+L.marker([19.4326,-99.1332],{icon:L.divIcon({className:'',
+  html:`<div style="width:28px;height:28px;background:#8b5cf6;border:2px solid rgba(255,255,255,0.6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 0 0 3px rgba(139,92,246,0.3)">✈️</div>`,
+  iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-16]})})
+.bindPopup(`<div class="popup-head"><div class="popup-name">✈️ Mexico City</div><div class="popup-country">Mexico 🇲🇽 — Return flight</div><div class="popup-days">~2.5 h from GUA</div></div><div class="popup-body"><div class="popup-desc">Book GUA → MEX (AICM) or GUA → NLU via Aeroméxico, Volaris, or VivaAerobus.</div></div>`,
+  {className:'dark-popup'}).addTo(map);
+
+/* ═══════════════════════ OSRM ROUTING ════════════════════ */
+async function fetchRoute(fromLng, fromLat, toLng, toLat) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if (d.code === 'Ok' && d.routes?.[0])
+      return d.routes[0].geometry.coordinates.map(([lng,lat]) => [lat,lng]);
+  } catch(e) { console.warn('OSRM:', e); }
+  return null;
+}
+
+/* ═══════════════════════ ROUTE DRAWING ═══════════════════ */
+let currentMode = 'car';
+const routeCoords  = new Array(8).fill(null); // fetched once
+const routeLines   = new Array(8).fill(null); // current polylines
+const segLineEls   = [];  // sidebar .seg-connector refs
+const segContentEls = []; // sidebar segment content refs
+
+function segColor(i, mode) {
+  if (mode === 'car')    return carSegs[i].border ? '#ef4444' : '#f97316';
+  if (mode === 'bus')    return '#14b8a6';
+  if (mode === 'hybrid') return hybridSegs[i].mode === 'car' ? '#f97316' : '#14b8a6';
+  return '#f97316';
+}
+
+function segTooltip(i, mode) {
+  const c = carSegs[i]; const b = busSegs[i]; const h = hybridSegs[i];
+  if (mode === 'car') return `
+    <div class="tt-route" style="color:#f97316">${c.from} → ${c.to}</div>
+    <div><span class="tt-time">⏱ ${c.t}</span> &nbsp;·&nbsp; ${c.km} km</div>
+    <div class="tt-sub">${c.road}</div>
+    <div class="tt-notes">${c.notes}</div>`;
+  if (mode === 'bus') return `
+    <div class="tt-route" style="color:#14b8a6">🚌 ${c.from} → ${c.to}</div>
+    <div><span class="tt-time">⏱ ${b.t}</span> &nbsp;·&nbsp; ${b.cost}</div>
+    <div class="tt-sub">${b.company}</div>
+    <div class="tt-notes">${b.notes}</div>`;
+  if (mode === 'hybrid') {
+    const iscar = h.mode === 'car';
+    const col = iscar ? '#f97316' : '#14b8a6';
+    const icon = iscar ? '🚗' : '🚌';
+    const main = iscar ? `<span class="tt-time">⏱ ${c.t}</span> · ${c.km} km` : `<span class="tt-time">⏱ ${b.t}</span> · ${b.cost}`;
+    return `<div class="tt-route" style="color:${col}">${icon} ${c.from} → ${c.to}</div>
+            <div>${main}</div>
+            <div class="tt-notes">${h.rec.replace(/^[🚗🚌]\s*/,'')}</div>`;
+  }
+}
+
+function drawSegment(i, mode) {
+  if (routeLines[i]) { map.removeLayer(routeLines[i]); routeLines[i] = null; }
+  const coords = routeCoords[i]; if (!coords) return;
+  const color = segColor(i, mode);
+  const line = L.polyline(coords, {color, weight:4, opacity:0.85, smoothFactor:1});
+  line.on('mouseover', function(){ this.setStyle({weight:6, opacity:1}); });
+  line.on('mouseout',  function(){ this.setStyle({weight:4, opacity:0.85}); });
+  line.bindTooltip(segTooltip(i, mode), {className:'seg-tooltip', sticky:true, direction:'top', offset:[0,-6]});
+  line.addTo(map);
+  routeLines[i] = line;
+}
+
+function renderSegContent(i, mode) {
+  const c = carSegs[i]; const b = busSegs[i]; const h = hybridSegs[i];
+  const isBorder = c.border;
+  if (mode === 'car') {
+    const bb = isBorder ? '<span class="badge badge-border">🛂 + border</span>' : '';
+    return `<span class="seg-km">${c.km} km</span> · <span class="seg-time">${c.t}</span>${bb}<span class="badge badge-ok">✓ &lt;6h</span>
+            <br><span class="seg-muted">${c.road}</span>`;
+  }
+  if (mode === 'bus') {
+    const bb = isBorder ? '<span class="badge badge-border">🛂</span>' : '';
+    return `<span class="seg-co">🚌 ${b.company}</span>${bb}
+            <br><span class="seg-time">${b.t}</span> · <span class="seg-cost">${b.cost}</span>
+            <br><span class="seg-muted">${b.freq}</span>`;
+  }
+  if (mode === 'hybrid') {
+    const iscar = h.mode === 'car';
+    const badgeClass = iscar ? 'badge-car' : (h.mode === 'shuttle' ? 'badge-shuttle' : 'badge-bus');
+    const modeLabel = iscar ? '🚗 Car' : (h.mode === 'shuttle' ? '🚌 Shuttle' : '🚌 Bus');
+    const detail = iscar
+      ? `<span class="seg-km">${c.km} km</span> · <span class="seg-time">${c.t}</span>`
+      : `<span class="seg-time">${b.t}</span> · <span class="seg-cost">${b.cost}</span>`;
+    return `<span class="badge ${badgeClass}">${modeLabel}</span> ${detail}
+            <br><span class="seg-rec">${h.rec.replace(/^[🚗🚌]\s*/,'')}</span>`;
+  }
+}
+
+function updateSidebarSegments(mode) {
+  segContentEls.forEach((el, i) => { el.innerHTML = renderSegContent(i, mode); });
+  // Update connector gradients
+  segLineEls.forEach((el, i) => {
+    const fromColor = stops[i].color;
+    const toColor   = stops[i+1].color;
+    el.style.background = `linear-gradient(to bottom, ${fromColor}, ${toColor})`;
+    // In hybrid, tint the connector if it's a bus segment
+    if (mode === 'hybrid' && hybridSegs[i].mode !== 'car') {
+      el.style.background = `linear-gradient(to bottom, #14b8a6, #14b8a6)`;
+    }
+  });
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  document.getElementById('mode-desc').textContent = modeDescs[mode];
+  for (let i = 0; i < 8; i++) drawSegment(i, mode);
+  updateSidebarSegments(mode);
+  clearHL();
+}
+
+/* ═══════════════════════ LOAD ROUTES ════════════════════ */
+async function loadRoutes() {
+  let loaded = 0;
+  const promises = stops.slice(0,-1).map(async (stop, i) => {
+    const next = stops[i+1];
+    const coords = await fetchRoute(stop.lng, stop.lat, next.lng, next.lat);
+    routeCoords[i] = coords;
+    loaded++;
+    document.getElementById('loading-text').textContent = `Loading road routes… ${loaded}/8`;
+    drawSegment(i, 'car');
+  });
+  await Promise.all(promises);
+  const ov = document.getElementById('loading-overlay');
+  ov.classList.add('hidden');
+  setTimeout(() => { ov.style.display = 'none'; }, 500);
+}
+loadRoutes();
+
+/* ═══════════════════════ HIGHLIGHT ROUTES ═══════════════ */
+let hlLayer = null, hlDest = null;
+window._hls = [];
+
+function clearHL() {
+  if (hlLayer) { map.removeLayer(hlLayer); hlLayer = null; }
+  if (hlDest)  { map.removeLayer(hlDest);  hlDest  = null; }
+  document.querySelectorAll('.hl-item').forEach(e => e.classList.remove('hl-active'));
+  document.getElementById('hl-box').classList.remove('show');
+}
+
+window.showHL = async function(idx) {
+  const {baseLat, baseLng, lat, lng, name, time, stopName} = window._hls[idx];
+  document.querySelectorAll('.hl-item').forEach(e => e.classList.remove('hl-active'));
+  const el = document.querySelector(`.hl-item[data-idx="${idx}"]`);
+  if (el) el.classList.add('hl-active');
+  if (hlLayer) { map.removeLayer(hlLayer); hlLayer = null; }
+  if (hlDest)  { map.removeLayer(hlDest);  hlDest  = null; }
+
+  const box = document.getElementById('hl-box');
+  const content = document.getElementById('hl-box-content');
+  box.classList.add('show');
+  content.innerHTML = `<span style="color:#64748b;font-style:italic">Loading route to ${name}…</span>`;
+
+  const coords = await fetchRoute(baseLng, baseLat, lng, lat);
+  if (coords) {
+    hlLayer = L.polyline(coords, {color:'#38bdf8', weight:4, opacity:0.95}).addTo(map);
+    hlDest  = L.marker([lat, lng], {icon: L.divIcon({className:'',
+      html:`<div style="width:22px;height:22px;background:#38bdf8;border:2px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0f172a;box-shadow:0 2px 8px rgba(0,0,0,0.5)">★</div>`,
+      iconSize:[22,22],iconAnchor:[11,11]})}).addTo(map);
+    content.innerHTML = `<span class="hl-name">${stopName} → ${name}</span><span class="hl-time">⏱ ${time}</span>`;
+    map.fitBounds(hlLayer.getBounds(), {padding:[60,60]});
+  } else {
+    content.innerHTML = `<span style="color:#f87171">Could not load route to ${name}</span>`;
+  }
+};
+
+/* ═══════════════════════ MARKERS & POPUPS ═══════════════ */
+function markerIcon(num, color) {
+  return L.divIcon({className:'',
+    html:`<div style="width:28px;height:28px;background:${color};border:2.5px solid rgba(255,255,255,0.85);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:white;box-shadow:0 2px 10px rgba(0,0,0,0.45);font-family:system-ui,sans-serif">${num}</div>`,
+    iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-16]});
+}
+
+function buildPopup(stop) {
+  const hlsHtml = stop.highlights.map(h => {
+    const idx = window._hls.length;
+    window._hls.push({baseLat:stop.lat,baseLng:stop.lng,lat:h.lat,lng:h.lng,name:h.name,time:h.time,stopName:stop.name});
+    return `<div class="hl-item" data-idx="${idx}" onclick="showHL(${idx})">
+      <span style="color:#334155;font-size:0.6rem;margin-top:2px">›</span>
+      <div class="hl-item-body">
+        <div class="hl-item-name">${h.name}</div>
+        <div class="hl-item-time">⏱ ${h.time}</div>
+        <div class="hl-hint">Click to show route on map</div>
+      </div></div>`;
+  }).join('');
+  return `
+    <div class="popup-head" style="border-left:4px solid ${stop.color}">
+      <div class="popup-name">${stop.name}</div>
+      <div class="popup-country">${stop.country}</div>
+      <div class="popup-days">${stop.days}</div>
+    </div>
+    <div class="popup-body">
+      <div class="popup-desc">${stop.desc}</div>
+      <div class="popup-hl-title">Highlights — click to show route ↓</div>
+      ${hlsHtml}
+      <div class="popup-tip">💡 ${stop.tip}</div>
+    </div>`;
+}
+
+const markers = stops.map(stop => {
+  const m = L.marker([stop.lat,stop.lng],{icon:markerIcon(stop.num,stop.color)})
+    .bindPopup(buildPopup(stop),{className:'dark-popup',maxWidth:310});
+  m.on('click', () => clearHL());
+  return m.addTo(map);
+});
+
+/* ═══════════════════════ SIDEBAR ════════════════════════ */
+const itinerary = document.getElementById('itinerary');
+
+stops.forEach((stop, i) => {
+  // Stop row
+  const row = document.createElement('div');
+  row.className = 'stop-row';
+  const hlPrev = stop.highlights.slice(0,3).map(h=>h.name).join(' · ') + (stop.highlights.length > 3 ? ` +${stop.highlights.length-3}` : '');
+  row.innerHTML = `
+    <div class="stop-num" style="background:${stop.color}">${stop.num}</div>
+    <div class="stop-content">
+      <div class="stop-title">${stop.name}</div>
+      <div class="stop-meta"><span class="stop-country">${stop.country}</span><span class="stop-duration">${stop.days}</span></div>
+      <div class="stop-hl-preview">${hlPrev}</div>
+    </div>`;
+  row.addEventListener('click', () => {
+    document.querySelectorAll('.stop-row').forEach(r=>r.classList.remove('active'));
+    row.classList.add('active');
+    clearHL();
+    map.setView([stop.lat,stop.lng],10,{animate:true});
+    markers[i].openPopup();
+  });
+  itinerary.appendChild(row);
+
+  // Segment row (between stops)
+  if (i < 8) {
+    const segRow = document.createElement('div');
+    segRow.className = 'seg-row';
+
+    const connector = document.createElement('div');
+    connector.className = 'seg-connector';
+    connector.style.background = `linear-gradient(to bottom,${stop.color},${stops[i+1].color})`;
+    segLineEls.push(connector);
+
+    const content = document.createElement('div');
+    content.className = 'seg-content';
+    content.innerHTML = renderSegContent(i, 'car');
+    segContentEls.push(content);
+
+    segRow.appendChild(connector);
+    segRow.appendChild(content);
+    itinerary.appendChild(segRow);
+  }
+});
+
+// Flight + Mexico City
+const flightRow = document.createElement('div');
+flightRow.className = 'flight-row';
+flightRow.innerHTML = `<div class="flight-line"></div><div class="flight-info">✈️ <strong>Flight: Guatemala City → Mexico City</strong><br><span style="color:#64748b">~2.5 h · GUA → MEX/NLU · Book in advance</span></div>`;
+itinerary.appendChild(flightRow);
+
+const mexRow = document.createElement('div');
+mexRow.className = 'stop-row';
+mexRow.innerHTML = `<div class="stop-num" style="background:#8b5cf6;opacity:0.7">✈</div><div class="stop-content"><div class="stop-title">Mexico City</div><div class="stop-meta"><span class="stop-country">Mexico 🇲🇽 — flight return</span></div><div class="stop-hl-preview">AICM (MEX) or Felipe Ángeles (NLU)</div></div>`;
+mexRow.addEventListener('click', () => {
+  document.querySelectorAll('.stop-row').forEach(r=>r.classList.remove('active'));
+  mexRow.classList.add('active');
+  clearHL();
+  map.setView([19.4326,-99.1332],9,{animate:true});
+});
+itinerary.appendChild(mexRow);
+</script>
+</body>
+</html>
