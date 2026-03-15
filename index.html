@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Road Trip: Oaxaca → Guatemala City</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -149,6 +149,22 @@
     .hl-item-time { font-size: 0.60rem; color: #475569; margin-top: 1px; }
     .hl-hint { font-size: 0.57rem; color: #334155; font-style: italic; margin-top: 1px; display: none; }
     .hl-item:hover .hl-hint { display: block; }
+
+    /* ── Mobile Layout ── */
+    #mobile-nav { display: none; width: 100%; flex-shrink: 0; }
+    .mob-tab { flex: 1; background: none; border: none; color: #64748b; font-size: 0.78rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; transition: color 0.15s, background 0.15s; }
+    .mob-tab .mob-icon { font-size: 1.15rem; }
+    .mob-tab.active { color: #f97316; background: rgba(249,115,22,0.08); }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; height: 100dvh; overflow: hidden; }
+      #sidebar { width: 100%; min-width: unset; border-right: none; border-bottom: 1px solid #1e293b; display: none; flex: 1; overflow-y: auto; }
+      #sidebar.mob-visible { display: flex; }
+      #map-wrap { flex: 1; min-height: 0; }
+      #map-wrap.mob-hidden { display: none; }
+      #mobile-nav { display: flex; height: calc(50px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid #1e293b; background: #0f172a; }
+      #hl-box { bottom: calc(60px + env(safe-area-inset-bottom)); left: 10px; right: 10px; transform: none; white-space: normal; flex-wrap: wrap; font-size: 0.68rem; }
+    }
   </style>
 </head>
 <body>
@@ -233,7 +249,37 @@
   </div>
 </div>
 
+<div id="mobile-nav">
+  <button class="mob-tab active" id="tab-map" onclick="mobView('map')">
+    <span class="mob-icon">🗺</span><span>Map</span>
+  </button>
+  <button class="mob-tab" id="tab-itinerary" onclick="mobView('itinerary')">
+    <span class="mob-icon">📋</span><span>Itinerary</span>
+  </button>
+</div>
+
 <script>
+/* ═══════════════════════ MOBILE VIEW TOGGLE ═══════════════ */
+function mobView(view) {
+  if (window.innerWidth > 768) return;
+  const sidebar = document.getElementById('sidebar');
+  const mapWrap = document.getElementById('map-wrap');
+  const tabMap  = document.getElementById('tab-map');
+  const tabIt   = document.getElementById('tab-itinerary');
+  if (view === 'map') {
+    sidebar.classList.remove('mob-visible');
+    mapWrap.classList.remove('mob-hidden');
+    tabMap.classList.add('active');
+    tabIt.classList.remove('active');
+    setTimeout(() => map.invalidateSize(), 50);
+  } else {
+    sidebar.classList.add('mob-visible');
+    mapWrap.classList.add('mob-hidden');
+    tabMap.classList.remove('active');
+    tabIt.classList.add('active');
+  }
+}
+
 /* ═══════════════════════ STOPS DATA ═══════════════════════ */
 const stops = [
   {
@@ -561,6 +607,7 @@ window.showHL = async function(idx) {
   const box = document.getElementById('hl-box');
   const content = document.getElementById('hl-box-content');
   box.classList.add('show');
+  mobView('map');
   content.innerHTML = `<span style="color:#64748b;font-style:italic">Loading route to ${name}…</span>`;
 
   const coords = await fetchRoute(baseLng, baseLat, lng, lat);
@@ -637,6 +684,7 @@ stops.forEach((stop, i) => {
     clearHL();
     map.setView([stop.lat,stop.lng],10,{animate:true});
     markers[i].openPopup();
+    mobView('map');
   });
   itinerary.appendChild(row);
 
