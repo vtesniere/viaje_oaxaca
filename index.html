@@ -11,7 +11,7 @@
     body { font-family: 'Segoe UI', system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; background: #0f172a; }
 
     /* ── Sidebar ── */
-    #sidebar { width: 400px; min-width: 400px; background: #0f172a; color: #e2e8f0; overflow-y: auto; display: flex; flex-direction: column; border-right: 1px solid #1e293b; }
+    #sidebar { width: 400px; background: #0f172a; color: #e2e8f0; overflow-y: auto; display: flex; flex-direction: column; border-right: 1px solid #1e293b; }
     #sidebar::-webkit-scrollbar { width: 4px; }
     #sidebar::-webkit-scrollbar-track { background: #0f172a; }
     #sidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
@@ -92,8 +92,7 @@
 
     /* ── Legend & tips ── */
     .legend-section { padding: 10px 16px; border-bottom: 1px solid #1e293b; }
-    .legend-title { font-size: 0.56rem; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-    .legend-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+.legend-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
     .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.64rem; color: #94a3b8; }
     .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .tips-section { padding: 10px 16px; }
@@ -176,13 +175,12 @@
   </div>
 
   <div class="stats-row">
-    <div class="stat-cell"><div class="stat-num" id="stat-km" style="color:#f97316">~1,200</div><div class="stat-lbl">km driving</div></div>
+    <div class="stat-cell"><div class="stat-num" style="color:#f97316">~1,200</div><div class="stat-lbl">km driving</div></div>
     <div class="stat-cell"><div class="stat-num" style="color:#94a3b8">21–23</div><div class="stat-lbl">Days total</div></div>
     <div class="stat-cell"><div class="stat-num" style="color:#94a3b8">9</div><div class="stat-lbl">Stops</div></div>
     <div class="stat-cell"><div class="stat-num" style="color:#94a3b8">6h</div><div class="stat-lbl">Max / day</div></div>
   </div>
 
-  <!-- Mode selector -->
   <div class="mode-bar">
     <button class="mode-btn active" data-mode="car" onclick="switchMode('car')">
       <span class="mode-icon">🚗</span><span>Car</span>
@@ -243,7 +241,6 @@
     <div class="loading-text" id="loading-text">Loading road routes…</div>
   </div>
   <div id="hl-box">
-    <span>📍</span>
     <span id="hl-box-content"></span>
     <button class="hl-clear" onclick="clearHL()">✕ Clear</button>
   </div>
@@ -259,7 +256,6 @@
 </div>
 
 <script>
-/* ═══════════════════════ MOBILE VIEW TOGGLE ═══════════════ */
 function mobView(view) {
   if (window.innerWidth > 768) return;
   const sidebar = document.getElementById('sidebar');
@@ -280,7 +276,6 @@ function mobView(view) {
   }
 }
 
-/* ═══════════════════════ STOPS DATA ═══════════════════════ */
 const stops = [
   {
     num:1, name:"Oaxaca City", country:"Mexico 🇲🇽", lat:17.0669, lng:-96.7203,
@@ -400,7 +395,6 @@ const stops = [
   }
 ];
 
-/* ═══════════════════════ SEGMENT DATA ═════════════════════ */
 const carSegs = [
   {km:260, t:"3.5–4.5 h", from:"Oaxaca City",    to:"Tehuantepec",          road:"Hwy 190", notes:"Winding Sierra Madre mountain roads — many curves and topes (speed bumps). Scenic but slow, don't underestimate.", border:false},
   {km:300, t:"4–5 h",     from:"Tehuantepec",    to:"Tuxtla Gutiérrez",     road:"Hwy 190 (Chiapas lowlands)", notes:"Flatter isthmus then rolling terrain. Toll booths and town sections add up — allow the full 5 h.", border:false},
@@ -441,7 +435,6 @@ const modeDescs = {
   hybrid: "🔀 Best of both: rent car for Mexico (Oaxaca + Chiapas day trips), return it in San Cristóbal, then take tourist shuttles through the border and across Guatemala."
 };
 
-/* ═══════════════════════ MAP INIT ════════════════════════ */
 const map = L.map('map', {center:[16.0,-92.8], zoom:6});
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
@@ -457,7 +450,6 @@ L.marker([19.4326,-99.1332],{icon:L.divIcon({className:'',
 .bindPopup(`<div class="popup-head"><div class="popup-name">✈️ Mexico City</div><div class="popup-country">Mexico 🇲🇽 — Return flight</div><div class="popup-days">~2.5 h from GUA</div></div><div class="popup-body"><div class="popup-desc">Book GUA → MEX (AICM) or GUA → NLU via Aeroméxico, Volaris, or VivaAerobus.</div></div>`,
   {className:'dark-popup'}).addTo(map);
 
-/* ═══════════════════════ OSRM ROUTING ════════════════════ */
 async function fetchRoute(fromLng, fromLat, toLng, toLat) {
   try {
     const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`;
@@ -465,11 +457,10 @@ async function fetchRoute(fromLng, fromLat, toLng, toLat) {
     const d = await r.json();
     if (d.code === 'Ok' && d.routes?.[0])
       return d.routes[0].geometry.coordinates.map(([lng,lat]) => [lat,lng]);
-  } catch(e) { console.warn('OSRM:', e); }
+  } catch(e) {}
   return null;
 }
 
-/* ═══════════════════════ ROUTE DRAWING ═══════════════════ */
 let currentMode = 'car';
 const routeCoords  = new Array(8).fill(null); // fetched once
 const routeLines   = new Array(8).fill(null); // current polylines
@@ -480,26 +471,25 @@ function segColor(i, mode) {
   if (mode === 'car')    return carSegs[i].border ? '#ef4444' : '#f97316';
   if (mode === 'bus')    return '#14b8a6';
   if (mode === 'hybrid') return hybridSegs[i].mode === 'car' ? '#f97316' : '#14b8a6';
-  return '#f97316';
 }
 
 function segTooltip(i, mode) {
   const c = carSegs[i]; const b = busSegs[i]; const h = hybridSegs[i];
   if (mode === 'car') return `
     <div class="tt-route" style="color:#f97316">${c.from} → ${c.to}</div>
-    <div><span class="tt-time">⏱ ${c.t}</span> &nbsp;·&nbsp; ${c.km} km</div>
+    <div><span class="tt-time">${c.t}</span> &nbsp;·&nbsp; ${c.km} km</div>
     <div class="tt-sub">${c.road}</div>
     <div class="tt-notes">${c.notes}</div>`;
   if (mode === 'bus') return `
     <div class="tt-route" style="color:#14b8a6">🚌 ${c.from} → ${c.to}</div>
-    <div><span class="tt-time">⏱ ${b.t}</span> &nbsp;·&nbsp; ${b.cost}</div>
+    <div><span class="tt-time">${b.t}</span> &nbsp;·&nbsp; ${b.cost}</div>
     <div class="tt-sub">${b.company}</div>
     <div class="tt-notes">${b.notes}</div>`;
   if (mode === 'hybrid') {
     const iscar = h.mode === 'car';
     const col = iscar ? '#f97316' : '#14b8a6';
     const icon = iscar ? '🚗' : '🚌';
-    const main = iscar ? `<span class="tt-time">⏱ ${c.t}</span> · ${c.km} km` : `<span class="tt-time">⏱ ${b.t}</span> · ${b.cost}`;
+    const main = iscar ? `<span class="tt-time">${c.t}</span> · ${c.km} km` : `<span class="tt-time">${b.t}</span> · ${b.cost}`;
     return `<div class="tt-route" style="color:${col}">${icon} ${c.from} → ${c.to}</div>
             <div>${main}</div>
             <div class="tt-notes">${h.rec.replace(/^[🚗🚌]\s*/,'')}</div>`;
@@ -553,7 +543,7 @@ function updateSidebarSegments(mode) {
     el.style.background = `linear-gradient(to bottom, ${fromColor}, ${toColor})`;
     // In hybrid, tint the connector if it's a bus segment
     if (mode === 'hybrid' && hybridSegs[i].mode !== 'car') {
-      el.style.background = `linear-gradient(to bottom, #14b8a6, #14b8a6)`;
+      el.style.background = '#14b8a6';
     }
   });
 }
@@ -567,7 +557,6 @@ function switchMode(mode) {
   clearHL();
 }
 
-/* ═══════════════════════ LOAD ROUTES ════════════════════ */
 async function loadRoutes() {
   let loaded = 0;
   const promises = stops.slice(0,-1).map(async (stop, i) => {
@@ -585,7 +574,6 @@ async function loadRoutes() {
 }
 loadRoutes();
 
-/* ═══════════════════════ HIGHLIGHT ROUTES ═══════════════ */
 let hlLayer = null, hlDest = null;
 window._hls = [];
 
@@ -616,14 +604,13 @@ window.showHL = async function(idx) {
     hlDest  = L.marker([lat, lng], {icon: L.divIcon({className:'',
       html:`<div style="width:22px;height:22px;background:#38bdf8;border:2px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0f172a;box-shadow:0 2px 8px rgba(0,0,0,0.5)">★</div>`,
       iconSize:[22,22],iconAnchor:[11,11]})}).addTo(map);
-    content.innerHTML = `<span class="hl-name">${stopName} → ${name}</span><span class="hl-time">⏱ ${time}</span>`;
+    content.innerHTML = `<span class="hl-name">${stopName} → ${name}</span><span class="hl-time">${time}</span>`;
     map.fitBounds(hlLayer.getBounds(), {padding:[60,60]});
   } else {
     content.innerHTML = `<span style="color:#f87171">Could not load route to ${name}</span>`;
   }
 };
 
-/* ═══════════════════════ MARKERS & POPUPS ═══════════════ */
 function markerIcon(num, color) {
   return L.divIcon({className:'',
     html:`<div style="width:28px;height:28px;background:${color};border:2.5px solid rgba(255,255,255,0.85);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;color:white;box-shadow:0 2px 10px rgba(0,0,0,0.45);font-family:system-ui,sans-serif">${num}</div>`,
@@ -638,7 +625,7 @@ function buildPopup(stop) {
       <span style="color:#334155;font-size:0.6rem;margin-top:2px">›</span>
       <div class="hl-item-body">
         <div class="hl-item-name">${h.name}</div>
-        <div class="hl-item-time">⏱ ${h.time}</div>
+        <div class="hl-item-time">${h.time}</div>
         <div class="hl-hint">Click to show route on map</div>
       </div></div>`;
   }).join('');
@@ -652,7 +639,7 @@ function buildPopup(stop) {
       <div class="popup-desc">${stop.desc}</div>
       <div class="popup-hl-title">Highlights — click to show route ↓</div>
       ${hlsHtml}
-      <div class="popup-tip">💡 ${stop.tip}</div>
+      <div class="popup-tip">${stop.tip}</div>
     </div>`;
 }
 
@@ -663,7 +650,6 @@ const markers = stops.map(stop => {
   return m.addTo(map);
 });
 
-/* ═══════════════════════ SIDEBAR ════════════════════════ */
 const itinerary = document.getElementById('itinerary');
 
 stops.forEach((stop, i) => {
