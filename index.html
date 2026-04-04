@@ -164,6 +164,97 @@
       #mobile-nav { display: flex; height: calc(50px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom); border-top: 1px solid #1e293b; background: #0f172a; }
       #hl-box { bottom: calc(60px + env(safe-area-inset-bottom)); left: 10px; right: 10px; transform: none; white-space: normal; flex-wrap: wrap; font-size: 0.68rem; }
     }
+
+    /* ── Guatemala Proposal Panel ── */
+    #gt-btn {
+      position: absolute; top: 12px; right: 12px; z-index: 1100;
+      background: rgba(15,23,42,0.92); border: 1px solid #22c55e;
+      color: #4ade80; padding: 7px 14px; border-radius: 6px;
+      font-size: 0.72rem; font-weight: 600; cursor: pointer;
+      backdrop-filter: blur(6px); transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px; letter-spacing: 0.2px;
+    }
+    #gt-btn:hover { background: rgba(34,197,94,0.15); border-color: #4ade80; }
+    #gt-btn.active { display: none; }
+
+    #gt-panel {
+      position: absolute; top: 0; right: 0; bottom: 0; z-index: 1050;
+      width: 380px; background: #0f172a; color: #e2e8f0;
+      border-left: 1px solid #1e293b; overflow-y: auto;
+      transform: translateX(100%); transition: transform 0.3s ease;
+      display: flex; flex-direction: column;
+    }
+    #gt-panel.open { transform: translateX(0); }
+    #gt-panel::-webkit-scrollbar { width: 4px; }
+    #gt-panel::-webkit-scrollbar-track { background: #0f172a; }
+    #gt-panel::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+    #gt-header {
+      background: linear-gradient(135deg, #052e16 0%, #0f172a 100%);
+      padding: 14px 16px 12px; border-bottom: 1px solid #1e293b;
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 10px; flex-shrink: 0;
+    }
+    #gt-header h2 { font-size: 0.88rem; font-weight: 700; color: #f8fafc; margin: 0; }
+    .gt-hsub { font-size: 0.64rem; color: #64748b; margin-top: 3px; }
+    #gt-close {
+      background: none; border: 1px solid #334155; color: #64748b;
+      border-radius: 4px; padding: 3px 9px; cursor: pointer; font-size: 0.68rem;
+      transition: all 0.15s; flex-shrink: 0; white-space: nowrap;
+    }
+    #gt-close:hover { border-color: #94a3b8; color: #94a3b8; }
+
+    .gt-tabs { display: flex; border-bottom: 1px solid #1e293b; flex-shrink: 0; }
+    .gt-tab {
+      flex: 1; padding: 9px 8px 8px; background: none; border: none;
+      border-bottom: 2px solid transparent; cursor: pointer;
+      font-size: 0.7rem; color: #64748b; transition: all 0.15s; text-align: center; line-height: 1.4;
+    }
+    .gt-tab:hover:not(.active) { background: rgba(255,255,255,0.03); color: #94a3b8; }
+    .gt-tab.active { border-bottom-color: var(--gtc, #4ade80); color: var(--gtc, #4ade80); }
+    .gt-tab-name { font-weight: 600; font-size: 0.72rem; display: block; }
+    .gt-tab-sub { font-size: 0.57rem; color: #475569; display: block; margin-top: 1px; }
+    .gt-tab.active .gt-tab-sub { color: #64748b; }
+
+    .gt-overview {
+      padding: 9px 14px; background: #090d1a; border-bottom: 1px solid #1e293b;
+      font-size: 0.65rem; color: #94a3b8; line-height: 1.5; flex-shrink: 0;
+    }
+    .gt-overview strong { color: #cbd5e1; }
+
+    .gt-stop-card { padding: 10px 14px; border-bottom: 1px solid #1e293b; transition: background 0.12s; }
+    .gt-stop-card:hover { background: #1a2438; }
+    .gt-sc-head { display: flex; align-items: flex-start; gap: 9px; }
+    .gt-sc-num {
+      width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: 700; color: white; margin-top: 2px;
+    }
+    .gt-sc-title { font-size: 0.8rem; font-weight: 600; color: #f1f5f9; }
+    .gt-sc-meta { display: flex; gap: 5px; margin-top: 3px; align-items: center; flex-wrap: wrap; }
+    .gt-sc-dates { font-size: 0.59rem; color: #94a3b8; background: #1e293b; padding: 1px 6px; border-radius: 10px; }
+    .gt-sc-nights { font-size: 0.59rem; color: #64748b; }
+    .gt-sc-desc { font-size: 0.65rem; color: #64748b; margin-top: 6px; line-height: 1.45; }
+    .gt-sc-hls { margin-top: 5px; }
+    .gt-hl-item { font-size: 0.62rem; color: #64748b; padding: 2px 0 2px 10px; position: relative; line-height: 1.4; }
+    .gt-hl-item::before { content: '›'; position: absolute; left: 0; color: #334155; }
+
+    .gt-seg {
+      padding: 5px 14px 5px 25px; display: flex; align-items: center; gap: 8px;
+      background: #090d1a; border-bottom: 1px solid #1e293b;
+    }
+    .gt-seg-line { width: 2px; height: 24px; border-radius: 1px; flex-shrink: 0; }
+    .gt-seg-content { font-size: 0.62rem; color: #64748b; line-height: 1.5; flex: 1; }
+
+    .gt-timeline { padding: 12px 14px; }
+    .gt-tl-hdr { font-size: 0.56rem; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .gt-tl-item { display: flex; gap: 10px; margin-bottom: 5px; font-size: 0.63rem; color: #94a3b8; line-height: 1.4; }
+    .gt-tl-day { color: #475569; font-weight: 600; min-width: 78px; flex-shrink: 0; }
+
+    @media (max-width: 768px) {
+      #gt-btn { top: 10px; right: 10px; font-size: 0.67rem; padding: 5px 10px; }
+      #gt-panel { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -243,6 +334,29 @@
   <div id="hl-box">
     <span id="hl-box-content"></span>
     <button class="hl-clear" onclick="clearHL()">✕ Clear</button>
+  </div>
+
+  <button id="gt-btn" onclick="toggleGT()">🇬🇹 Guatemala Proposal</button>
+
+  <div id="gt-panel">
+    <div id="gt-header">
+      <div>
+        <h2>🇬🇹 Guatemala Trip Proposal</h2>
+        <div class="gt-hsub">11 nights · Apr 14 pm arrival → Apr 25 departure</div>
+      </div>
+      <button id="gt-close" onclick="toggleGT()">✕ Close</button>
+    </div>
+    <div class="gt-tabs">
+      <button class="gt-tab active" data-route="A" onclick="selectGTRoute('A')" style="--gtc:#4ade80">
+        <span class="gt-tab-name">A · Classic South</span>
+        <span class="gt-tab-sub">Antigua · Atitlán · Acatenango</span>
+      </button>
+      <button class="gt-tab" data-route="B" onclick="selectGTRoute('B')" style="--gtc:#818cf8">
+        <span class="gt-tab-name">B · Full Highlands</span>
+        <span class="gt-tab-sub">Antigua · Xela · Atitlán · Chichi</span>
+      </button>
+    </div>
+    <div id="gt-body"></div>
   </div>
 </div>
 
@@ -694,6 +808,256 @@ stops.forEach((stop, i) => {
     itinerary.appendChild(segRow);
   }
 });
+
+/* ─────────────── Guatemala Proposal ─────────────── */
+const GT_COLORS = { A: '#4ade80', B: '#818cf8' };
+
+// [lat, lng] waypoints for map routing
+const gtPaths = {
+  A: [[14.6349,-90.5069],[14.5586,-90.7295],[14.7409,-91.1601],[14.5586,-90.7295],[14.6349,-90.5069]],
+  B: [[14.6349,-90.5069],[14.5586,-90.7295],[14.8354,-91.5180],[14.7409,-91.1601],[14.6349,-90.5069]]
+};
+const gtSegNames = {
+  A: ['GUA → Antigua · shuttle ~45 min','Antigua → Lake Atitlán · ~2 h','Atitlán → Antigua (return) · ~2 h','Antigua → GUA · shuttle ~1 h'],
+  B: ['GUA → Antigua · shuttle ~45 min','Antigua → Quetzaltenango · ~3.5–4 h','Xela → Lake Atitlán · ~2.5 h','Atitlán → Guatemala City · ~3 h']
+};
+
+const gtRoutes = {
+  A: {
+    name: 'Classic South',
+    desc: 'Antigua as your colonial base, Lake Atitlán for volcano and village life, the Sunday Chichicastenango market, and an unforgettable overnight on Acatenango watching Fuego erupt.',
+    stops: [
+      { num:1, name:'Antigua Guatemala', sub:'Guatemala 🇬🇹', lat:14.5586, lng:-90.7295, dateRange:'Apr 14 (eve) – Apr 17', nights:3,
+        desc:'UNESCO World Heritage colonial city. Your arrival base (45-min shuttle from GUA). Cobblestone streets, baroque ruins, and Guatemala\'s best food scene.',
+        highlights:['Arco de Santa Catalina & Cathedral ruins','Cerro de la Cruz — panoramic 30-min hike','Finca Filadelfia — coffee farm tour (3 km)','Jade Museum & Mercado de Artesanías','San Juan del Obispo village (10 km)','Evening on 5a Avenida Sur'] },
+      { num:2, name:'Lake Atitlán', sub:'Panajachel hub · Guatemala 🇬🇹', lat:14.7409, lng:-91.1601, dateRange:'Apr 17 – Apr 21', nights:4,
+        desc:'Aldous Huxley called it "the most beautiful lake in the world". Three volcanoes, a dozen villages, and lanchas that leave every 30 minutes.',
+        highlights:['San Juan La Laguna — weaving cooperatives & murals','San Marcos La Laguna — yoga village, waterfront, cliff swim','Santiago Atitlán — Maximón shrine & Tzutujil textiles','Santa Cruz La Laguna — cliff path & snorkelling','⭐ Chichicastenango Sunday market Apr 20 — day trip (~1.5 h each way)'] },
+      { num:3, name:'Antigua Guatemala', sub:'Return base · Guatemala 🇬🇹', lat:14.5586, lng:-90.7295, dateRange:'Apr 21 – Apr 24', nights:3,
+        desc:'Return for the Acatenango overnight — the most spectacular volcano experience in Central America, watching Fuego erupt below at dusk and dawn.',
+        highlights:['⭐ Acatenango overnight hike — Fuego erupts at dusk & dawn (book in advance)','Textile Museum Ixchel (Zona 10, GUA — can do en route)','San Antonio Aguas Calientes weaving village (4 km)','Thermal bath at San Lorenzo El Tejar','Final wander through Parque Central'] },
+      { num:4, name:'Guatemala City', sub:'Departure · Guatemala 🇬🇹', lat:14.6349, lng:-90.5069, dateRange:'Apr 24 – 25', nights:1,
+        desc:'Shuttle to the capital for the final night. Squeeze in the Popol Vuh museum — world-class Mayan collection in Zona 10.',
+        highlights:['Museo Popol Vuh — world-class Mayan collection (Zona 10)','Zona Viva — final dinner & nightlife','La Aurora Airport GUA — depart Apr 25'] }
+    ],
+    segments: [
+      { from:'Antigua', to:'Lake Atitlán', km:90, t:'~2 h', type:'shuttle', cost:'~$15 USD', notes:'Tourist shuttle via Los Encuentros junction. Car also fine — parking available in Panajachel.' },
+      { from:'Lake Atitlán', to:'Antigua', km:90, t:'~2 h', type:'shuttle', cost:'~$15 USD', notes:'Return tourist shuttle. Book the morning before at your hotel.' },
+      { from:'Antigua', to:'Guatemala City', km:45, t:'~1–1.5 h', type:'shuttle', cost:'~$10 USD', notes:'Avoid weekday rush (5–7 pm). Allow 2.5 h before departure at GUA.' }
+    ],
+    timeline: [
+      {day:'Apr 14 (Mon)', desc:'Arrive GUA (pm) → shuttle to Antigua. Stroll 5a Avenida, dinner near Parque Central.'},
+      {day:'Apr 15 (Tue)', desc:'Antigua: Cathedral ruins, Arco de Santa Catalina, Cerro de la Cruz viewpoint.'},
+      {day:'Apr 16 (Wed)', desc:'Antigua: Finca Filadelfia coffee tour, Jade Museum, artisan market.'},
+      {day:'Apr 17 (Thu)', desc:'Shuttle to Panajachel → Lake Atitlán. Afternoon lancha to San Juan La Laguna.'},
+      {day:'Apr 18 (Fri)', desc:'Atitlán: San Marcos La Laguna — yoga village, cliff swim, waterfront cafés.'},
+      {day:'Apr 19 (Sat)', desc:'Atitlán: Santiago Atitlán by boat — Maximón shrine, Tzutujil weaving cooperatives.'},
+      {day:'Apr 20 (Sun) ⭐', desc:'Day trip to Chichicastenango Sunday market — most colourful indigenous market in the Americas.'},
+      {day:'Apr 21 (Mon)', desc:'Return shuttle to Antigua. Rest, explore final corners of the colonial city.'},
+      {day:'Apr 22 (Tue)', desc:'Antigua: Textile Museum Ixchel, San Antonio Aguas Calientes weaving village.'},
+      {day:'Apr 23 (Wed) ⭐', desc:'Acatenango overnight hike — summit at dusk, watch Fuego erupt at midnight & at dawn.'},
+      {day:'Apr 24 (Thu)', desc:'Descend Acatenango → shuttle to Guatemala City. Popol Vuh museum, Zona Viva dinner.'},
+      {day:'Apr 25 (Fri)', desc:'Depart La Aurora Airport (GUA). Check in 2.5 h before flight.'}
+    ]
+  },
+  B: {
+    name: 'Full Highlands',
+    desc: 'Push into the cool western highlands (Xela, Fuentes Georginas, Santa María volcano) before descending to Atitlán — and catch both the Sunday and Thursday Chichicastenango markets.',
+    stops: [
+      { num:1, name:'Antigua Guatemala', sub:'Guatemala 🇬🇹', lat:14.5586, lng:-90.7295, dateRange:'Apr 14 (eve) – Apr 16', nights:2,
+        desc:'Two nights to hit Antigua\'s colonial highlights before pushing west into the highlands.',
+        highlights:['Arco de Santa Catalina & Cathedral ruins','Cerro de la Cruz viewpoint','Mercado de Artesanías & Jade Museum','Finca Filadelfia coffee tour (3 km)'] },
+      { num:2, name:'Quetzaltenango (Xela)', sub:'Guatemala Highlands 🇬🇹', lat:14.8354, lng:-91.5180, dateRange:'Apr 16 – Apr 19', nights:3,
+        desc:'Guatemala\'s authentic second city at 2,300 m — far fewer tourists than Antigua, cool mountain air, and spectacular highland day trips in every direction.',
+        highlights:['⭐ Fuentes Georginas — natural thermal pools in cloud forest (12 km, steep road)','Santa María volcano hike — trailhead 5 km, then 5–6 h summit climb','San Andrés Xecul — technicolor Maya-baroque church (15 km)','Parque Centroamérica & neoclassical Municipalidad building','Momostenango — wool blankets & Mayan daykeeper community (60 km)'] },
+      { num:3, name:'Lake Atitlán', sub:'Panajachel hub · Guatemala 🇬🇹', lat:14.7409, lng:-91.1601, dateRange:'Apr 19 – Apr 23', nights:4,
+        desc:'Descend from the cool highlands to one of the world\'s most dramatic lakes. ⭐ Chichicastenango Sunday market (Apr 20) is a 1.5 h day trip from here.',
+        highlights:['⭐ Chichicastenango Sunday market Apr 20 — day trip (~1.5 h each way)','San Juan La Laguna — cooperatives & murals','San Marcos La Laguna — yoga & waterfront','Santiago Atitlán — Maximón & Tzutujil culture by boat','Santa Cruz La Laguna — cliff path & snorkelling'] },
+      { num:4, name:'Guatemala City', sub:'Departure · Guatemala 🇬🇹', lat:14.6349, lng:-90.5069, dateRange:'Apr 24 – 25', nights:1,
+        desc:'⭐ Stop at Chichicastenango Thursday market (Apr 24) en route from Atitlán, then continue to Guatemala City for the final night.',
+        highlights:['⭐ Chichicastenango Thursday market Apr 24 — en route to GUA','Museo Popol Vuh (Zona 10)','Zona Viva — final dinner','Depart GUA Apr 25'] }
+    ],
+    segments: [
+      { from:'Antigua', to:'Quetzaltenango', km:200, t:'~3.5–4 h', type:'shuttle / car', cost:'~$25 USD shuttle', notes:'Car gives freedom for Xela day trips. Pullman de Morales bus also runs. Via Los Encuentros and Cuatro Caminos.' },
+      { from:'Quetzaltenango', to:'Lake Atitlán', km:130, t:'~2.5 h', type:'shuttle', cost:'~$20 USD', notes:'Direct tourist shuttles Xela → Panajachel. Via Los Encuentros junction.' },
+      { from:'Lake Atitlán', to:'Guatemala City', km:140, t:'~2.5–3 h', type:'shuttle', cost:'~$20 USD', notes:'Option: stop at Chichicastenango Thu Apr 24 market en route (+1.5 h). Book shuttle a day ahead.' }
+    ],
+    timeline: [
+      {day:'Apr 14 (Mon)', desc:'Arrive GUA (pm) → shuttle to Antigua. Evening in Parque Central.'},
+      {day:'Apr 15 (Tue)', desc:'Antigua: Cathedral ruins, Arco, Cerro de la Cruz, coffee farm tour.'},
+      {day:'Apr 16 (Wed)', desc:'Antigua → shuttle to Quetzaltenango (Xela). Parque Centroamérica evening.'},
+      {day:'Apr 17 (Thu)', desc:'Xela: Fuentes Georginas hot springs + San Andrés Xecul technicolor church.'},
+      {day:'Apr 18 (Fri)', desc:'Xela: Santa María volcano hike (full day) or Momostenango day trip.'},
+      {day:'Apr 19 (Sat)', desc:'Xela → shuttle to Panajachel. Afternoon lancha to San Juan La Laguna.'},
+      {day:'Apr 20 (Sun) ⭐', desc:'Day trip to Chichicastenango Sunday market from Atitlán (~1.5 h each way).'},
+      {day:'Apr 21 (Mon)', desc:'Atitlán: San Marcos La Laguna — yoga, waterfront, cliff path to Santa Cruz.'},
+      {day:'Apr 22 (Tue)', desc:'Atitlán: Santiago Atitlán by boat — Maximón shrine, Tzutujil textiles & carvings.'},
+      {day:'Apr 23 (Wed)', desc:'Atitlán free day — swim, kayak, San Juan cooperatives at leisure.'},
+      {day:'Apr 24 (Thu) ⭐', desc:'Chichicastenango Thursday market → shuttle to Guatemala City (arrive evening).'},
+      {day:'Apr 25 (Fri)', desc:'Depart La Aurora Airport (GUA). Check in 2.5 h before flight.'}
+    ]
+  }
+};
+
+let gtOpen = false;
+let gtCurrentRoute = 'A';
+const gtMarkerLayers = {};
+const gtRouteLayers = {};
+const gtBuilt = {};
+
+function toggleGT() {
+  gtOpen = !gtOpen;
+  document.getElementById('gt-panel').classList.toggle('open', gtOpen);
+  document.getElementById('gt-btn').classList.toggle('active', gtOpen);
+  if (gtOpen) {
+    selectGTRoute(gtCurrentRoute);
+    setTimeout(() => map.invalidateSize(), 350);
+  } else {
+    Object.keys(GT_COLORS).forEach(k => {
+      if (gtMarkerLayers[k]) map.removeLayer(gtMarkerLayers[k]);
+      if (gtRouteLayers[k]) map.removeLayer(gtRouteLayers[k]);
+    });
+  }
+}
+
+function selectGTRoute(key) {
+  gtCurrentRoute = key;
+  document.querySelectorAll('.gt-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.route === key);
+  });
+  renderGTBody(key);
+  Object.keys(GT_COLORS).forEach(k => {
+    if (gtMarkerLayers[k]) map.removeLayer(gtMarkerLayers[k]);
+    if (gtRouteLayers[k]) map.removeLayer(gtRouteLayers[k]);
+  });
+  if (!gtBuilt[key]) {
+    gtBuilt[key] = true;
+    buildGTRoute(key);
+  } else {
+    if (gtMarkerLayers[key]) gtMarkerLayers[key].addTo(map);
+    if (gtRouteLayers[key]) gtRouteLayers[key].addTo(map);
+  }
+  const pts = gtPaths[key];
+  map.fitBounds(L.latLngBounds(pts), { padding: [50, 50] });
+}
+
+function renderGTBody(key) {
+  const r = gtRoutes[key];
+  const c = GT_COLORS[key];
+  let html = `<div class="gt-overview"><strong>${r.name}</strong> — ${r.desc}</div>`;
+  r.stops.forEach((stop, i) => {
+    const nightsLabel = stop.nights === 0 ? 'transit' : `${stop.nights} night${stop.nights !== 1 ? 's' : ''}`;
+    html += `
+      <div class="gt-stop-card">
+        <div class="gt-sc-head">
+          <div class="gt-sc-num" style="background:${c}">${stop.num}</div>
+          <div style="flex:1;min-width:0">
+            <div class="gt-sc-title">${stop.name}</div>
+            <div class="gt-sc-meta">
+              <span class="gt-sc-dates">${stop.dateRange}</span>
+              <span class="gt-sc-nights">${nightsLabel}</span>
+            </div>
+          </div>
+        </div>
+        <div class="gt-sc-desc">${stop.desc}</div>
+        <div class="gt-sc-hls">${stop.highlights.map(h => `<div class="gt-hl-item">${h}</div>`).join('')}</div>
+      </div>`;
+    if (i < r.segments.length) {
+      const seg = r.segments[i];
+      html += `
+        <div class="gt-seg">
+          <div class="gt-seg-line" style="background:${c}"></div>
+          <div class="gt-seg-content">
+            <span style="color:#94a3b8;font-weight:600">${seg.km} km · ${seg.t}</span> ·
+            <span style="color:#6ee7b7;font-weight:600">${seg.cost}</span>
+            <span style="font-size:0.56rem;padding:1px 5px;border-radius:3px;background:rgba(20,184,166,0.12);color:#5eead4;border:1px solid rgba(20,184,166,0.25);margin-left:3px">${seg.type}</span>
+            <br><span style="font-style:italic">${seg.notes}</span>
+          </div>
+        </div>`;
+    }
+  });
+  html += `<div class="gt-timeline"><div class="gt-tl-hdr">Day-by-Day Timeline</div>`;
+  r.timeline.forEach(t => {
+    html += `<div class="gt-tl-item"><span class="gt-tl-day">${t.day}</span><span>${t.desc}</span></div>`;
+  });
+  html += `</div>`;
+  document.getElementById('gt-body').innerHTML = html;
+}
+
+async function buildGTRoute(key) {
+  const color = GT_COLORS[key];
+  const path = gtPaths[key];
+  const names = gtSegNames[key];
+  const markerGroup = L.layerGroup().addTo(map);
+  const routeGroup = L.layerGroup().addTo(map);
+  gtMarkerLayers[key] = markerGroup;
+  gtRouteLayers[key] = routeGroup;
+
+  // GUA arrival/departure marker
+  L.marker([14.6349, -90.5069], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="width:26px;height:26px;background:#475569;border:2px solid rgba(255,255,255,0.75);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">✈</div>`,
+      iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-16]
+    })
+  }).bindPopup(
+    `<div class="popup-head"><div class="popup-name">✈ Guatemala City (GUA)</div><div class="popup-country">Guatemala 🇬🇹 — Arrival &amp; Departure</div></div><div class="popup-body"><div class="popup-desc">Arrive Apr 14 (pm) · shuttle to Antigua ~45 min · Depart Apr 25</div></div>`,
+    {className:'dark-popup'}
+  ).addTo(markerGroup);
+
+  // Stop markers (deduplicated by lat/lng)
+  const seen = new Set(['14.6349,-90.5069']);
+  gtRoutes[key].stops.forEach(stop => {
+    const ck = `${stop.lat},${stop.lng}`;
+    if (seen.has(ck)) return;
+    seen.add(ck);
+    L.marker([stop.lat, stop.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="width:26px;height:26px;background:${color};border:2px solid rgba(255,255,255,0.8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${stop.num}</div>`,
+        iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-16]
+      })
+    }).bindPopup(
+      `<div class="popup-head" style="border-left:4px solid ${color}"><div class="popup-name">${stop.name}</div><div class="popup-country">${stop.sub}</div><div class="popup-days">${stop.dateRange}</div></div><div class="popup-body"><div class="popup-desc">${stop.desc}</div></div>`,
+      {className:'dark-popup', maxWidth:290}
+    ).addTo(markerGroup);
+  });
+
+  // Chichicastenango day-trip star marker
+  L.marker([14.9465, -91.1097], {
+    icon: L.divIcon({
+      className: '',
+      html: `<div style="width:20px;height:20px;background:#f59e0b;border:2px solid rgba(255,255,255,0.7);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;box-shadow:0 2px 6px rgba(0,0,0,0.5);font-weight:700">★</div>`,
+      iconSize:[20,20], iconAnchor:[10,10], popupAnchor:[0,-12]
+    })
+  }).bindPopup(
+    `<div class="popup-head" style="border-left:4px solid #f59e0b"><div class="popup-name">Chichicastenango</div><div class="popup-country">Guatemala 🇬🇹 — Day trip</div><div class="popup-days">⭐ Sunday &amp; Thursday market</div></div><div class="popup-body"><div class="popup-desc">Most colourful indigenous market in the Americas. Sun Apr 20 from Atitlán (~1.5 h). Route B also catches Thu Apr 24 market en route to GUA.</div></div>`,
+    {className:'dark-popup', maxWidth:290}
+  ).addTo(markerGroup);
+
+  // Placeholder dashed lines
+  const segLines = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const pl = L.polyline([path[i], path[i+1]], {color, weight:3, opacity:0.4, dashArray:'8 5'}).addTo(routeGroup);
+    segLines.push(pl);
+  }
+
+  // Fetch OSRM and replace placeholders
+  await Promise.all(path.slice(0,-1).map(async (pt, i) => {
+    const next = path[i+1];
+    try {
+      const coords = await fetchRoute(pt[1], pt[0], next[1], next[0]);
+      if (coords) {
+        routeGroup.removeLayer(segLines[i]);
+        L.polyline(coords, {color, weight:3.5, opacity:0.8})
+          .bindTooltip(names[i], {className:'seg-tooltip', sticky:true, direction:'top', offset:[0,-6]})
+          .addTo(routeGroup);
+      }
+    } catch(e) {}
+  }));
+}
+
+/* ─────────────── End Guatemala Proposal ─────────────── */
 
 // Flight + Mexico City
 const flightRow = document.createElement('div');
