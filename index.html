@@ -223,8 +223,9 @@
     }
     .gt-overview strong { color: #cbd5e1; }
 
-    .gt-stop-card { padding: 10px 14px; border-bottom: 1px solid #1e293b; transition: background 0.12s; }
+    .gt-stop-card { padding: 10px 14px; border-bottom: 1px solid #1e293b; transition: background 0.12s; cursor: pointer; }
     .gt-stop-card:hover { background: #1a2438; }
+    .gt-stop-card.gt-sc-active { background: #1e2f47; }
     .gt-sc-head { display: flex; align-items: flex-start; gap: 9px; }
     .gt-sc-num {
       width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
@@ -913,6 +914,7 @@ let gtCurrentRoute = 'A';
 const gtMarkerLayers = {};
 const gtRouteLayers = {};
 const gtBuilt = {};
+const gtStopMarkers = {}; // key → { 'lat,lng': L.Marker }
 
 function hideMainTrip() {
   markers.forEach(m => map.removeLayer(m));
@@ -1002,7 +1004,7 @@ function renderGTBody(key) {
   r.stops.forEach((stop, i) => {
     const nightsLabel = stop.nights === 0 ? 'transit' : `${stop.nights} night${stop.nights !== 1 ? 's' : ''}`;
     html += `
-      <div class="gt-stop-card">
+      <div class="gt-stop-card" onclick="gtStopClick('${key}',${i})">
         <div class="gt-sc-head">
           <div class="gt-sc-num" style="background:${c}">${stop.num}</div>
           <div style="flex:1;min-width:0">
@@ -1046,9 +1048,10 @@ async function buildGTRoute(key) {
   const routeGroup = L.layerGroup().addTo(map);
   gtMarkerLayers[key] = markerGroup;
   gtRouteLayers[key] = routeGroup;
+  gtStopMarkers[key] = {};
 
-  // GUA arrival/departure marker
-  L.marker([14.6349, -90.5069], {
+  // GUA arrival/departure marker — stored so stop card click can open its popup
+  const guaMkr = L.marker([14.6349, -90.5069], {
     icon: L.divIcon({
       className: '',
       html: `<div style="width:26px;height:26px;background:#475569;border:2px solid rgba(255,255,255,0.75);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.5)">✈</div>`,
@@ -1058,23 +1061,29 @@ async function buildGTRoute(key) {
     `<div class="popup-head"><div class="popup-name">✈ Guatemala City (GUA)</div><div class="popup-country">Guatemala 🇬🇹 — Arrival &amp; Departure</div></div><div class="popup-body"><div class="popup-desc">Arrive Apr 14 (pm) · shuttle to Antigua ~45 min · Depart Apr 25</div></div>`,
     {className:'dark-popup'}
   ).addTo(markerGroup);
+  gtStopMarkers[key]['14.6349,-90.5069'] = guaMkr;
 
-  // Stop markers (deduplicated by lat/lng)
+  // Stop markers (deduplicated by lat/lng) — stored for stop-card click handler
   const seen = new Set(['14.6349,-90.5069']);
   gtRoutes[key].stops.forEach(stop => {
     const ck = `${stop.lat},${stop.lng}`;
-    if (seen.has(ck)) return;
-    seen.add(ck);
-    L.marker([stop.lat, stop.lng], {
-      icon: L.divIcon({
-        className: '',
-        html: `<div style="width:26px;height:26px;background:${color};border:2px solid rgba(255,255,255,0.8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${stop.num}</div>`,
-        iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-16]
-      })
-    }).bindPopup(
-      `<div class="popup-head" style="border-left:4px solid ${color}"><div class="popup-name">${stop.name}</div><div class="popup-country">${stop.sub}</div><div class="popup-days">${stop.dateRange}</div></div><div class="popup-body"><div class="popup-desc">${stop.desc}</div></div>`,
-      {className:'dark-popup', maxWidth:290}
-    ).addTo(markerGroup);
+    if (!seen.has(ck)) {
+      seen.add(ck);
+      const m = L.marker([stop.lat, stop.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div style="width:26px;height:26px;background:${color};border:2px solid rgba(255,255,255,0.8);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.5)">${stop.num}</div>`,
+          iconSize:[26,26], iconAnchor:[13,13], popupAnchor:[0,-16]
+        })
+      }).bindPopup(
+        `<div class="popup-head" style="border-left:4px solid ${color}"><div class="popup-name">${stop.name}</div><div class="popup-country">${stop.sub}</div><div class="popup-days">${stop.dateRange}</div></div><div class="popup-body"><div class="popup-desc">${stop.desc}</div></div>`,
+        {className:'dark-popup', maxWidth:290}
+      ).addTo(markerGroup);
+      gtStopMarkers[key][ck] = m;
+    } else {
+      // Duplicate location (e.g. Antigua return in Route A) — reuse existing marker ref
+      gtStopMarkers[key][ck] = gtStopMarkers[key][ck]; // already set
+    }
   });
 
   // Chichicastenango day-trip star marker
@@ -1110,6 +1119,29 @@ async function buildGTRoute(key) {
     } catch(e) {}
   }));
 }
+
+window.gtStopClick = function(key, idx) {
+  const stop = gtRoutes[key].stops[idx];
+  const color = GT_COLORS[key];
+
+  // Update active card highlight
+  document.querySelectorAll('.gt-stop-card').forEach((c, j) => {
+    c.classList.toggle('gt-sc-active', j === idx);
+    c.style.borderLeft = (j === idx) ? `3px solid ${color}` : '';
+    c.style.paddingLeft = (j === idx) ? '11px' : '';
+  });
+
+  // Zoom map to stop
+  map.setView([stop.lat, stop.lng], 12, {animate: true});
+
+  // Open popup on the corresponding marker
+  const ck = `${stop.lat},${stop.lng}`;
+  const m = gtStopMarkers[key] && gtStopMarkers[key][ck];
+  if (m) m.openPopup();
+
+  // On mobile: switch to map view
+  if (window.innerWidth <= 768) mobView('map');
+};
 
 /* ─────────────── End Guatemala Proposal ─────────────── */
 
